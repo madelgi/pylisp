@@ -1,27 +1,30 @@
 import parser as p
 import evaluator as e
+import sys
 
 
-def repl(prompt='pylisp> '):
+from util import to_string
+
+
+def load(filename):
+    """Eval every expression from a file.
+    """
+    repl(None, p.InPort(open(filename)), None)
+
+def repl(prompt='lispy> ', inport=p.InPort(sys.stdin), out=sys.stdout):
     """A prompt-read-eval-print loop.
-
-    Args:
-        prompt (str): The symbol that initializes the pylisp prompt. Defaults
-            to `pylisp>`
     """
+    sys.stderr.write("Lispy version 2.0\n")
     while True:
-        val = e.eval(p.parse(raw_input(prompt)))
-        if val is not None:
-            print(schemestr(val))
-
-
-def schemestr(exp):
-    """Convert a Python object back into a Scheme-readable string.
-
-    Args:
-        exp (list or ): TODO
-    """
-    if isinstance(exp, list):
-        return '(' + ' '.join(map(schemestr, exp)) + ')'
-    else:
-        return str(exp)
+        try:
+            if prompt:
+                sys.stderr.write(prompt)
+            x = p.parse(inport)
+            if x is p.eof_object:
+                return
+            val = e.eval(x)
+            if val is not None and out:
+                print >> out, to_string(val)
+        except Exception, ex:
+            print '{0}: {1}'.format(type(ex).__name__, ex)
+            break
